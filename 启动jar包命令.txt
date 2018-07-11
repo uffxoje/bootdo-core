@@ -1,0 +1,3 @@
+java -jar bootdo-1.6.9_port8189.jar -Xmx384m
+
+java -jar bootdo-1.6.9_port8190.jar -Xmx384m
