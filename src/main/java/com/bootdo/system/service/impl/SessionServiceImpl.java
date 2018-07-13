@@ -1,5 +1,6 @@
 package com.bootdo.system.service.impl;
 
+import com.bootdo.common.redis.shiro.RedisSessionDAO;
 import com.bootdo.system.domain.UserDO;
 import com.bootdo.system.domain.UserOnline;
 import com.bootdo.system.domain.UserToken;
@@ -9,6 +10,7 @@ import org.apache.shiro.session.mgt.eis.SessionDAO;
 import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.subject.support.DefaultSubjectContext;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
@@ -23,11 +25,19 @@ import java.util.List;
  */
 @Service
 public class SessionServiceImpl implements SessionService {
-    private final SessionDAO sessionDAO;
+
+    @Value("${spring.cache.type}")
+    private String type = "redis";
+
+    private SessionDAO sessionDAO;
 
     @Autowired
-    public SessionServiceImpl(SessionDAO sessionDAO) {
-        this.sessionDAO = sessionDAO;
+    public SessionServiceImpl(SessionDAO sessionDAO, RedisSessionDAO redisSessionDAO) {
+        if ("redis".equals(type)) {
+            this.sessionDAO = redisSessionDAO;
+        } else if("ehcache".equals(type)){
+            this.sessionDAO = sessionDAO;
+        }
     }
 
     @Override
@@ -80,8 +90,7 @@ public class SessionServiceImpl implements SessionService {
 
     @Override
     public boolean forceLogout(String sessionId) {
-        Session session = sessionDAO.readSession(sessionId);
-        session.setTimeout(0);
+        sessionDAO.delete(sessionDAO.readSession(sessionId));
         return true;
     }
 }
